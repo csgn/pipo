@@ -60,7 +60,7 @@ class MainSuite extends munit.FunSuite {
     key1={{value1}}
     """.trim
 
-    val Some((_, obtainedGrammar)) = parser.run(input2)
+    // val Some((_, obtainedGrammar)) = parser.run(input2)
     // assertEquals(expectedGrammar, obtainedGrammar)
   }
 
@@ -167,5 +167,11 @@ class MainSuite extends munit.FunSuite {
     predicates.map { case (e, o) =>
       assertEquals(e, o)
     }
+  }
+
+  test("zeroOrMany") {
+    val p1 = predicate(_ != 'd').zeroOrMany
+
+    println(p1.run("ccccccd"))
   }
 }

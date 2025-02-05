@@ -35,7 +35,7 @@ object Parser {
     final def or(p2: Parser[A]): Parser[A] = F.combineK(p1, p2)
     final def <|>(p2: Parser[A]): Parser[A] = or(p2)
 
-    final def orb[B](p2: Parser[B]): Parser[Either[A, B]] = Parser { s =>
+    final def orb[B](p2: => Parser[B]): Parser[Either[A, B]] = Parser { s =>
       p1.run(s) match {
         case None =>
           p2.run(s) match {
@@ -45,16 +45,19 @@ object Parser {
         case Some((s2, a)) => Some((s2, Left(a)))
       }
     }
-    final def <||>[B](p2: Parser[B]): Parser[Either[A, B]] = orb(p2)
+    final def <||>[B](p2: => Parser[B]): Parser[Either[A, B]] = orb(p2)
 
     final def map[B](f: A => B): Parser[B] = F.map(p1)(f)
 
-    final def <*[B](p2: Parser[B]): Parser[A] = F.productL(p1)(p2)
-    final def *>[B](p2: Parser[B]): Parser[B] = F.productR(p1)(p2)
+    final def <*[B](p2: => Parser[B]): Parser[A] = F.productL(p1)(p2)
+    final def *>[B](p2: => Parser[B]): Parser[B] = F.productR(p1)(p2)
 
-    final def zeroOrMany: Parser[List[A]] = F.map(p1)(List(_))
+    // map2 has strict parameters. Without non-strict params, this function
+    // always call itself until stack overflow.
+    // TODO: implement non-strict version of map2.
+    final def zeroOrMany: Parser[List[A]] = map2(zeroOrMany)(_ :: _)
 
-    final def forwardTo[B](p2: Parser[B]): Parser[(Option[A], Option[B])] = Parser { s =>
+    final def forwardTo[B](p2: => Parser[B]): Parser[(Option[A], Option[B])] = Parser { s =>
       p1.run(s) match {
         case None =>
           p2.run(s) match {
@@ -69,7 +72,7 @@ object Parser {
       }
     }
 
-    final def ~[B](p2: Parser[B]): Parser[(Option[A], Option[B])] = forwardTo(p2)
+    final def ~[B](p2: => Parser[B]): Parser[(Option[A], Option[B])] = forwardTo(p2)
 
     final def debug: Parser[A] = {
       F.map(p1)(a => {
