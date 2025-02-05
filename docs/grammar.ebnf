@@ -1,6 +1,6 @@
 grammar = { field } ;
 field = namespace , newline, variables ;
-namespace = "[" , identifier , "]" ;
+namespace = "[" , identifier , "]", newline ;
 variables = { variable } ;
 variable = key, '=', value, newline
 key = identifier ;

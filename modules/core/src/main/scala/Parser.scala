@@ -35,12 +35,48 @@ object Parser {
     final def or(p2: Parser[A]): Parser[A] = F.combineK(p1, p2)
     final def <|>(p2: Parser[A]): Parser[A] = or(p2)
 
-    final def map[B](f: A => B): Parser[B] = F.map(p1)(f)
+    final def orb[B](p2: Parser[B]): Parser[Either[A, B]] = Parser { s =>
+      p1.run(s) match {
+        case None =>
+          p2.run(s) match {
+            case None          => None
+            case Some((s2, b)) => Some((s2, Right(b)))
+          }
+        case Some((s2, a)) => Some((s2, Left(a)))
+      }
+    }
+    final def <||>[B](p2: Parser[B]): Parser[Either[A, B]] = orb(p2)
 
-    final def as[B](b: B): Parser[B] = F.as(p1, b)
+    final def map[B](f: A => B): Parser[B] = F.map(p1)(f)
 
     final def <*[B](p2: Parser[B]): Parser[A] = F.productL(p1)(p2)
     final def *>[B](p2: Parser[B]): Parser[B] = F.productR(p1)(p2)
+
+    final def zeroOrMany: Parser[List[A]] = F.map(p1)(List(_))
+
+    final def forwardTo[B](p2: Parser[B]): Parser[(Option[A], Option[B])] = Parser { s =>
+      p1.run(s) match {
+        case None =>
+          p2.run(s) match {
+            case None          => None
+            case Some((s3, b)) => Some((s3, (None, Some(b))))
+          }
+        case Some((s2, a)) =>
+          p2.run(s2) match {
+            case None          => Some((s2, (Some(a), None)))
+            case Some((s3, b)) => Some((s3, (Some(a), Some(b))))
+          }
+      }
+    }
+
+    final def ~[B](p2: Parser[B]): Parser[(Option[A], Option[B])] = forwardTo(p2)
+
+    final def debug: Parser[A] = {
+      F.map(p1)(a => {
+        println(("DEBUG", a))
+        a
+      })
+    }
   }
 
   implicit val parserAlternative: Alternative[Parser] = new Alternative[Parser] {

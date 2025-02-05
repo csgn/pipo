@@ -7,8 +7,10 @@ import pipo.core._
 import pipo.core.Parser._
 
 class MainSuite extends munit.FunSuite {
+  val parser = Pipo()
+
   test("grammar test 1") {
-    val expected1 = PipoGrammar(
+    val expectedGrammar = PipoGrammar(
       fields = List(
         PipoField(
           namespace = PipoNamespace(
@@ -18,13 +20,14 @@ class MainSuite extends munit.FunSuite {
         )
       )
     )
-    val input1 = """
-    [service_a]
-    """
+    val input1 = """[service_a]"""
+
+    // val Some((_, obtainedGrammar)) = parser.run(input1)
+    // assertEquals(expectedGrammar, obtainedGrammar)
   }
 
   test("grammar test 2") {
-    val expected2 = PipoGrammar(
+    val expectedGrammar = PipoGrammar(
       fields = List(
         PipoField(
           namespace = PipoNamespace(
@@ -34,7 +37,7 @@ class MainSuite extends munit.FunSuite {
                 key = PipoKey(get = PipoIdentifier(get = "key1")),
                 value = List(
                   PipoValue(
-                    get = Left(PipoIdentifier(get = "value1"))
+                    get = Right(PipoIdentifier(get = "value1"))
                   )
                 )
               ),
@@ -42,15 +45,7 @@ class MainSuite extends munit.FunSuite {
                 key = PipoKey(get = PipoIdentifier(get = "key2")),
                 value = List(
                   PipoValue(
-                    get = Left(PipoIdentifier(get = "value2"))
-                  )
-                )
-              ),
-              PipoVariable(
-                key = PipoKey(get = PipoIdentifier(get = "key3")),
-                value = List(
-                  PipoValue(
-                    get = Left(PipoIdentifier(get = "value3"))
+                    get = Right(PipoIdentifier(get = "value2"))
                   )
                 )
               )
@@ -62,14 +57,15 @@ class MainSuite extends munit.FunSuite {
 
     val input2 = """
     [service_a]
-    key1=value1
-    key2=value2
-    key3=value3
-    """
+    key1={{value1}}
+    """.trim
+
+    val Some((_, obtainedGrammar)) = parser.run(input2)
+    // assertEquals(expectedGrammar, obtainedGrammar)
   }
 
   test("grammar test 3") {
-    val expected3 = PipoGrammar(
+    val expectedGrammar = PipoGrammar(
       fields = List(
         PipoField(
           namespace = PipoNamespace(
@@ -79,7 +75,7 @@ class MainSuite extends munit.FunSuite {
                 key = PipoKey(get = PipoIdentifier(get = "key1")),
                 value = List(
                   PipoValue(
-                    get = Left(PipoIdentifier(get = "value1"))
+                    get = Right(PipoIdentifier(get = "value1"))
                   )
                 )
               )
@@ -94,7 +90,7 @@ class MainSuite extends munit.FunSuite {
                 key = PipoKey(get = PipoIdentifier(get = "key2")),
                 value = List(
                   PipoValue(
-                    get = Left(PipoIdentifier(get = "value1"))
+                    get = Right(PipoIdentifier(get = "value1"))
                   )
                 )
               ),
@@ -102,33 +98,33 @@ class MainSuite extends munit.FunSuite {
                 key = PipoKey(get = PipoIdentifier(get = "key2")),
                 value = List(
                   PipoValue(
-                    get = Left(
+                    get = Right(
                       PipoIdentifier(get = "hdfs://")
                     )
                   ),
                   PipoValue(
-                    get = Right(
+                    get = Left(
                       PipoInterpolate(
                         property = PipoProperty(
                           keys = List(
-                            PipoKey(get = PipoIdentifier(get = "key1"))
+                            PipoIdentifier(get = "key1")
                           )
                         )
                       )
                     )
                   ),
                   PipoValue(
-                    get = Left(
+                    get = Right(
                       PipoIdentifier(get = "::")
                     )
                   ),
                   PipoValue(
-                    get = Right(
+                    get = Left(
                       PipoInterpolate(
                         property = PipoProperty(
                           keys = List(
-                            PipoKey(get = PipoIdentifier(get = "service_a")),
-                            PipoKey(get = PipoIdentifier(get = "key1"))
+                            PipoIdentifier(get = "service_a"),
+                            PipoIdentifier(get = "key1")
                           )
                         )
                       )
@@ -150,6 +146,9 @@ class MainSuite extends munit.FunSuite {
     key1=value1
     key2=hdfs://{{key1}}::{{service_a.key1}}
     """
+
+    // val Some((_, obtainedGrammar)) = parser.run(input3)
+    // assertEquals(expectedGrammar, obtainedGrammar)
   }
 
   test("predicate") {
@@ -168,11 +167,5 @@ class MainSuite extends munit.FunSuite {
     predicates.map { case (e, o) =>
       assertEquals(e, o)
     }
-  }
-
-  test("predicate or") {
-    val p1 = predicate(ch => List('.', ',', 'r').contains(ch))
-
-    println(p1.run("hello.world,"))
   }
 }
