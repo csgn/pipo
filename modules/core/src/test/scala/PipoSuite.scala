@@ -74,6 +74,113 @@ class PipoSuite extends munit.FunSuite {
     assertEquals(obtained, expected)
   }
 
+  test("pGrammar 6") {
+    val input = """
+                  |[namespace_1]
+                  |key1=value1
+                  |
+                  |
+                  |
+                  |[namespace_2]
+                  |key1 = value1
+                  |key2 = value2
+                  |key3 = value3
+                  |
+                  |
+                  |[namespace_4]
+                  |key1 = value1
+                  |key2 = value2
+                  |key3 = value3
+                  |key4 = value4
+                  |key5 = value5
+                  |
+                  |""".stripMargin
+    val expected = Some(
+      "",
+      PipoGrammar(
+        List(
+          PipoField(
+            PipoNamespace(
+              PipoLit("namespace_1"),
+              List(
+                PipoVariable(
+                  PipoKey(PipoLit("key1")),
+                  PipoValue(
+                    PipoLit("value1")
+                  )
+                )
+              )
+            )
+          ),
+          PipoField(
+            PipoNamespace(
+              PipoLit("namespace_2"),
+              List(
+                PipoVariable(
+                  PipoKey(PipoLit("key1")),
+                  PipoValue(
+                    PipoLit("value1")
+                  )
+                ),
+                PipoVariable(
+                  PipoKey(PipoLit("key2")),
+                  PipoValue(
+                    PipoLit("value2")
+                  )
+                ),
+                PipoVariable(
+                  PipoKey(PipoLit("key3")),
+                  PipoValue(
+                    PipoLit("value3")
+                  )
+                )
+              )
+            )
+          ),
+          PipoField(
+            PipoNamespace(
+              PipoLit("namespace_4"),
+              List(
+                PipoVariable(
+                  PipoKey(PipoLit("key1")),
+                  PipoValue(
+                    PipoLit("value1")
+                  )
+                ),
+                PipoVariable(
+                  PipoKey(PipoLit("key2")),
+                  PipoValue(
+                    PipoLit("value2")
+                  )
+                ),
+                PipoVariable(
+                  PipoKey(PipoLit("key3")),
+                  PipoValue(
+                    PipoLit("value3")
+                  )
+                ),
+                PipoVariable(
+                  PipoKey(PipoLit("key4")),
+                  PipoValue(
+                    PipoLit("value4")
+                  )
+                ),
+                PipoVariable(
+                  PipoKey(PipoLit("key5")),
+                  PipoValue(
+                    PipoLit("value5")
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+    )
+    val obtained = pGrammar.run(input)
+    assertEquals(obtained, expected)
+  }
+
   test("pVariable 1") {
     val input = "key1=value1"
     val expected = Some(
