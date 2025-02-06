@@ -4,6 +4,15 @@ import cats._
 import cats.implicits._
 
 case class Parser[+A](run: String => Option[(String, A)])
+
+object Symbol {
+  val Equal = '='
+  val Newline = '\n'
+  val OpenBracket = '['
+  val CloseBracket = ']'
+  val Whitespace = ' '
+}
+
 object Parser {
   def char(c: Char): Parser[Char] = Parser { s =>
     if (s.isEmpty || s.charAt(0) != c) None
@@ -15,6 +24,12 @@ object Parser {
       (x, y.mkString)
     }
   }
+
+  def nl: Parser[List[Char]] = char(Symbol.Newline).many
+
+  def ws: Parser[List[Char]] = char(Symbol.Whitespace).many
+
+  def until(chars: Char*): Parser[String] = span(x => !chars.contains(x))
 
   def span(f: Char => Boolean): Parser[String] = Parser { s =>
     @scala.annotation.tailrec
@@ -94,12 +109,16 @@ object Parser {
 
     final def !~[B](p2: => Parser[B]): Parser[(Option[A], Option[B])] = forwardToIfLeftSome(p2)
 
-    final def debug: Parser[A] = {
+    final def debug(s: String = ""): Parser[A] = {
       F.map(p1)(a => {
-        println(("DEBUG", a))
+        println(s"==DEBUG${if (s.isEmpty) s else s"[${s}]"}=========")
+        println(a.toString.replaceAll("\\n", "\\\\n"))
+        println("----------------\n")
         a
       })
     }
+
+    final def debug: Parser[A] = debug()
   }
 
   implicit val parserAlternative: Alternative[Parser] = new Alternative[Parser] {

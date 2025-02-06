@@ -1,13 +1,11 @@
 grammar = { field } ;
 field = namespace , newline, variables ;
-namespace = "[" , identifier , "]", newline ;
+namespace = "[" , lit , "]", newline ;
 variables = { variable } ;
 variable = key, '=', value, newline
-key = identifier ;
-value = identifier | interpolate ;
-interpolate = "{{" , property , "}}" ;
-property = identifier , ["." , property] ;
-identifier = letter , { letter | digit | "_" } ;
+key = lit ;
+value = lit ;
+lit = letter , { letter | digit | "_" } ;
 
 character = letter | digit | symbol | "_" ;
 
