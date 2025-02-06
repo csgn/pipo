@@ -20,37 +20,47 @@ object Pipo {
       p.map(PipoIdentifier)
 
     def pProperty: Parser[PipoProperty] =
-      pIdentifier(predicate(_ != '}')).zeroOrMany
+      pIdentifier(span(_ != '}')).many
         .map(PipoProperty)
 
     def pInterpolate: Parser[PipoInterpolate] =
-      (string("{{") *> pProperty.debug <* string("}}"))
+      (string("{{") *> pProperty <* string("}}"))
         .map(PipoInterpolate)
 
     def pValue: Parser[PipoValue] =
-      (pInterpolate <||> pIdentifier(predicate(_ != '}'))).map {
-        case left @ Left(_)   => PipoValue(left)
-        case right @ Right(_) => PipoValue(right)
-      }
+      (pInterpolate <||> pIdentifier(span(_ != '\n')))
+        .map {
+          case left @ Left(_)   => PipoValue(left)
+          case right @ Right(_) => PipoValue(right)
+        }
 
     def pKey: Parser[PipoKey] =
-      pIdentifier(predicate(_ != '='))
+      pIdentifier(span(_ != '=').debug)
         .map(PipoKey)
 
     def pVariable: Parser[PipoVariable] =
-      (pKey ~ (char('=') *> pValue.zeroOrMany)).debug
+      // pKey must we don't need to evaluate the right side.
+      (pKey !~ (char('=') *> pValue.many <* char('\n')))
         .map {
-          case (None, None)             => ???
-          case (None, Some(value))      => ???
+          case (None, None) => {
+            PipoVariable(PipoKey(PipoIdentifier("NaN")), Nil)
+          }
+          case (None, Some(value)) => {
+            PipoVariable(PipoKey(PipoIdentifier("NaN")), Nil)
+          }
           case (Some(key), None)        => PipoVariable(key, Nil)
           case (Some(key), Some(value)) => PipoVariable(key, value)
         }
 
     def pNamespace: Parser[PipoNamespace] =
-      ((char('[') *> pIdentifier(predicate(_ != ']')) <* char(']')) ~ pVariable.zeroOrMany)
+      ((char('[') *> pIdentifier(span(_ != ']')) <* char(']')) !~ (char('\n') *> pVariable.many))
         .map {
-          case (None, None)                  => ???
-          case (None, Some(_))               => ???
+          case (None, None) => {
+            PipoNamespace(PipoIdentifier("NaN"), Nil)
+          }
+          case (None, Some(a)) => {
+            PipoNamespace(PipoIdentifier("NaN"), Nil)
+          }
           case (Some(name), None)            => PipoNamespace(name, Nil)
           case (Some(name), Some(variables)) => PipoNamespace(name, variables)
         }
@@ -59,7 +69,7 @@ object Pipo {
       pNamespace.map(PipoField)
 
     def pGrammar: Parser[PipoGrammar] =
-      pField.zeroOrMany.map(PipoGrammar)
+      pField.many.debug.map(PipoGrammar)
 
     pGrammar.run(s)
   }
