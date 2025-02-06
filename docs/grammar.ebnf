@@ -2,7 +2,7 @@ grammar = { field } ;
 field = namespace , newline, variables ;
 namespace = "[" , lit , "]", newline ;
 variables = { variable } ;
-variable = key, '=', value, newline
+variable = key, '=', value, newline ;
 key = lit ;
 value = lit ;
 lit = letter , { letter | digit | "_" } ;
